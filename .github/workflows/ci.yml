@@ -1,0 +1,82 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  ci:
+    name: Lint, Type-check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout source ────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Node.js ─────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # ── 3. Install dependencies (skip Husky in CI) ────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0 # prevent Husky from installing hooks in CI
+
+      # ── 4. ESLint — zero warnings allowed ────────────────────────────────────
+      - name: Run ESLint
+        run: |
+          ALL_LINT_FILES=$(git ls-files | grep -E '\.(ts|js|tsx|jsx)$' | grep -v '^dist/' | grep -v 'eslint.config.js' | grep -v 'commitlint.config.ts' || true)
+          if [ -n "$ALL_LINT_FILES" ]; then
+            npx eslint $ALL_LINT_FILES --max-warnings=0 --no-warn-ignored
+          else
+            echo "ℹ️ No JS/TS files found for linting."
+          fi
+
+      # ── 5. TypeScript type-check ──────────────────────────────────────────────
+      - name: Run TypeScript type-check
+        run: npx tsc --noEmit
+
+      # ── 6. Check for console.log statements ───────────────────────────────────
+      - name: Check for console.log
+        run: |
+          FOUND=$(grep -rnw --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" "console.log" ./src || true)
+          if [ -n "$FOUND" ]; then
+            echo "❌ console.log found in source files:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "✅ No console.log found."
+
+      # ── 7. Check for explicit 'any' type usage ────────────────────────────────
+      - name: Check for 'any' type usage
+        run: |
+          ANY_USAGE=$(grep -Pnr --include="*.ts" --include="*.tsx" '(?<![/*]\s*)[:,<]\s*any\b' ./src || true)
+          if [ -n "$ANY_USAGE" ]; then
+            FILTERED=$(echo "$ANY_USAGE" | grep -vE 'eslint-disable|ts-ignore|@ts-expect-error' || true)
+            if [ -n "$FILTERED" ]; then
+              echo "❌ 'any' type usage found (add eslint-disable comment to intentionally ignore):"
+              echo "$FILTERED"
+              exit 1
+            fi
+          fi
+          echo "✅ No unguarded 'any' type usage."
+
+      # ── 8. Production build ───────────────────────────────────────────────────
+      - name: Build
+        run: npm run build
+
+      # ── 9. Upload build artifact ──────────────────────────────────────────────
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: dist/
+          retention-days: 7
