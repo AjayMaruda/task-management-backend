@@ -3,7 +3,7 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 import { errorHandler } from "./middleware/errorHandler";
-import { ApiError } from "./utils/apiError";
+import { authRouter, userRouter } from "./routes/user.routes";
 
 const app = express();
 
@@ -12,8 +12,16 @@ app.use(express.json());
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// API routes
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+
 app.use((req, _res, next) => {
-  next(new ApiError(404, `Route ${req.originalUrl} not found`));
+  const err = new Error(`Route ${req.originalUrl} not found`) as Error & {
+    statusCode?: number;
+  };
+  err.statusCode = 404;
+  next(err);
 });
 
 app.use(errorHandler);
