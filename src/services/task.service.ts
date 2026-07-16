@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 import { Task } from "../models/task.schema";
 import { User } from "../models/user.schema";
 import { CreateTaskDTO, UpdateTaskDTO, ListTasksDTO } from "../dtos/task.dto";
@@ -27,6 +27,7 @@ export class TaskService {
       ...dto,
       dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
       assignee: dto.assignee || null,
+      createdBy: dto.createdBy,
     });
 
     return HandleResponse(
@@ -44,10 +45,15 @@ export class TaskService {
     const status = dto.status;
     const priority = dto.priority;
     const assignee = dto.assignee;
+    const createdBy = dto.createdBy;
     const sortKey = dto.sortKey || "createdAt";
     const sortValue = dto.sortValue === "asc" ? 1 : -1;
 
     const filter: TaskFilter = { is_deleted: false };
+
+    if (createdBy) {
+      filter.createdBy = createdBy;
+    }
 
     if (search) {
       filter.$or = [
@@ -70,6 +76,7 @@ export class TaskService {
 
     const items = await Task.find(filter)
       .populate("assignee", "name email phone")
+      .populate("createdBy", "name email phone")
       .sort({ [sortKey]: sortValue })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -99,7 +106,11 @@ export class TaskService {
     );
   }
 
-  static async updateTask(id: string, dto: UpdateTaskDTO) {
+  static async updateTask(
+    id: string,
+    dto: UpdateTaskDTO,
+    userId?: string | Types.ObjectId,
+  ) {
     if (dto.assignee) {
       const userExists = await User.findOne({
         _id: dto.assignee,
@@ -119,8 +130,13 @@ export class TaskService {
       updateFields.dueDate = new Date(dto.dueDate);
     }
 
+    const query: Record<string, unknown> = { _id: id, is_deleted: false };
+    if (userId) {
+      query.createdBy = userId;
+    }
+
     const task = await Task.findOneAndUpdate(
-      { _id: id, is_deleted: false },
+      query,
       { $set: updateFields },
       { new: true },
     );
@@ -143,9 +159,14 @@ export class TaskService {
     );
   }
 
-  static async deleteTask(id: string) {
+  static async deleteTask(id: string, userId?: string | Types.ObjectId) {
+    const query: Record<string, unknown> = { _id: id, is_deleted: false };
+    if (userId) {
+      query.createdBy = userId;
+    }
+
     const task = await Task.findOneAndUpdate(
-      { _id: id, is_deleted: false },
+      query,
       { $set: { is_deleted: true, deletedAt: new Date() } },
       { new: true },
     );

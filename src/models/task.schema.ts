@@ -32,6 +32,11 @@ const taskSchema = new Schema(
       ref: "User",
       default: null,
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     is_deleted: {
       type: Boolean,
       default: false,
