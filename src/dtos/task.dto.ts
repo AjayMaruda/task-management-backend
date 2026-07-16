@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 /**
  * @swagger
  * components:
@@ -99,6 +101,7 @@ export interface CreateTaskDTO {
   priority?: "low" | "medium" | "high";
   dueDate?: string | Date | null;
   assignee?: string | null;
+  createdBy?: string | Types.ObjectId;
 }
 
 export interface UpdateTaskDTO {
@@ -119,4 +122,5 @@ export interface ListTasksDTO {
   status?: "todo" | "in_progress" | "completed";
   priority?: "low" | "medium" | "high";
   assignee?: string;
+  createdBy?: string | Types.ObjectId;
 }

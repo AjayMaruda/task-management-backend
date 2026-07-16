@@ -9,6 +9,7 @@ export interface ITask {
   priority: "low" | "medium" | "high";
   dueDate?: Date | null;
   assignee?: Types.ObjectId | string | IUser | null;
+  createdBy?: Types.ObjectId | string | IUser | null;
   is_deleted: boolean;
   deletedAt?: Date | null;
   createdAt?: Date;
@@ -17,6 +18,7 @@ export interface ITask {
 
 export interface TaskFilter {
   is_deleted: boolean;
+  createdBy?: Types.ObjectId | string;
   assignee?: Types.ObjectId | string;
   status?: "todo" | "in_progress" | "completed";
   priority?: "low" | "medium" | "high";
