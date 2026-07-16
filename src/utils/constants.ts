@@ -19,6 +19,14 @@ export const COMMON_MESSAGES = {
   PASSWORD_INVALID:
     "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one special character",
   VALIDATION_FAILED: "Validation failed",
+  TITLE_REQUIRED: "Title is required",
+  TITLE_CANNOT_BE_EMPTY: "Title cannot be empty",
+  INVALID_STATUS:
+    "Invalid status value. Must be 'todo', 'in_progress', or 'completed'",
+  INVALID_PRIORITY:
+    "Invalid priority value. Must be 'low', 'medium', or 'high'",
+  INVALID_DUE_DATE: "Invalid due date format",
+  INVALID_ASSIGNEE: "Invalid assignee ID",
 };
 
 export const responseData = {
