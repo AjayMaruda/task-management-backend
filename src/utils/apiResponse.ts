@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
 export enum ResponseStatus {
   SUCCESS = "success",
@@ -6,43 +6,22 @@ export enum ResponseStatus {
   ERROR = "error",
 }
 
-export function handleResponse<T = unknown>(
-  res: Response,
+export function HandleResponse<T = unknown>(
   statusCode: number,
   status: ResponseStatus,
   message?: string,
   data?: T,
   error?: unknown,
-): Response {
-  const success = status === ResponseStatus.SUCCESS;
-
-  const responsePayload = {
-    statusCode,
-    success,
+) {
+  return {
+    statusCode:
+      statusCode ??
+      (status === ResponseStatus.SUCCESS
+        ? StatusCodes.OK
+        : StatusCodes.INTERNAL_SERVER_ERROR),
     status,
     message,
-    ...(data !== undefined ? { data } : {}),
-    ...(error !== undefined ? { error } : {}),
+    data,
+    error,
   };
-
-  return res.status(statusCode).json(responsePayload);
-}
-
-export function sendSuccess<T = unknown>(
-  res: Response,
-  statusCode: number,
-  message: string,
-  data?: T,
-): Response {
-  return handleResponse(res, statusCode, ResponseStatus.SUCCESS, message, data);
-}
-
-export function sendError(
-  res: Response,
-  statusCode: number,
-  message: string,
-  error?: unknown,
-): Response {
-  const status = statusCode >= 500 ? ResponseStatus.ERROR : ResponseStatus.FAIL;
-  return handleResponse(res, statusCode, status, message, undefined, error);
 }
