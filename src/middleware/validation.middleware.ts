@@ -46,3 +46,49 @@ export const validateRegister = [
     .withMessage(COMMON_MESSAGES.PASSWORD_INVALID),
   handleValidation,
 ];
+
+export const validateCreateTask = [
+  body("title").trim().notEmpty().withMessage(COMMON_MESSAGES.TITLE_REQUIRED),
+  body("status")
+    .optional()
+    .isIn(["todo", "in_progress", "completed"])
+    .withMessage(COMMON_MESSAGES.INVALID_STATUS),
+  body("priority")
+    .optional()
+    .isIn(["low", "medium", "high"])
+    .withMessage(COMMON_MESSAGES.INVALID_PRIORITY),
+  body("dueDate")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .withMessage(COMMON_MESSAGES.INVALID_DUE_DATE),
+  body("assignee")
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage(COMMON_MESSAGES.INVALID_ASSIGNEE),
+  handleValidation,
+];
+
+export const validateUpdateTask = [
+  body("title")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage(COMMON_MESSAGES.TITLE_CANNOT_BE_EMPTY),
+  body("status")
+    .optional()
+    .isIn(["todo", "in_progress", "completed"])
+    .withMessage(COMMON_MESSAGES.INVALID_STATUS),
+  body("priority")
+    .optional()
+    .isIn(["low", "medium", "high"])
+    .withMessage(COMMON_MESSAGES.INVALID_PRIORITY),
+  body("dueDate")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .withMessage(COMMON_MESSAGES.INVALID_DUE_DATE),
+  body("assignee")
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage(COMMON_MESSAGES.INVALID_ASSIGNEE),
+  handleValidation,
+];
